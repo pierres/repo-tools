@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# usage: _grep_pkginfo pkgfile pattern
+_grep_pkginfo() {
+	local _ret
+
+	_ret="$(/usr/bin/bsdtar -xOqf "$1" .PKGINFO | /bin/grep -m 1 -E "$2" | /bin/sed 's|\w*\s*=\s*\(.*\)|\1|')"
+	echo "$_ret"
+}
+
+# Get the package name
+getpkgname() {
+	local _name
+
+	_name="$(_grep_pkginfo "$1" "^pkgname")"
+	if [ -z "$_name" ]; then
+		echo "ERROR: Package '$1' has no pkgname in the PKGINFO. Fail!" >&2
+		exit 1
+	fi
+
+	echo "$_name"
+}
+
+# Get the package base or name as fallback
+getpkgbase() {
+	local _base
+
+	_base="$(_grep_pkginfo "$1" "^pkgbase")"
+	if [ -z "$_base" ]; then
+		getpkgname "$1"
+		return 0
+	fi
+
+	echo "$_base"
+}
+
+
+if [ $# -ne 1 ]; then
+	echo "usage: $(basename $0) <pkgfile>"
+	exit 1
+fi
+
+getpkgbase "${1}"

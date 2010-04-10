@@ -1,0 +1,29 @@
+#!/bin/bash
+
+home="$(dirname "${0}")"
+target="${home}/repo"
+lock='/tmp/mirrorsync.lck'
+source='-e ssh gerolde.archlinux.org:/srv/ftp'
+repos='core,extra,testing,community,community-testing'
+
+[ ! -d "${target}" ] && exit 1
+[ -f "${lock}" ] && exit 1
+touch "${lock}"
+
+rsync -rptlv --safe-links --delete --progress -h \
+	--include='*/' \
+	--include='*.db.tar.gz' \
+	--exclude='*' \
+	${source}/{${repos}} \
+	"${target}"
+
+rsync -rptlv --safe-links --delete --progress -h \
+	--exclude='*.db.tar.gz*' \
+	--exclude='*.abs.tar.gz*' \
+	--exclude='*.files.tar.gz*' \
+	--exclude='*.links.tar.gz*' \
+	--exclude='lastsync' \
+	${source}/{${repos}} \
+	"${target}"
+
+rm -f "${lock}"
