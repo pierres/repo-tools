@@ -22,6 +22,7 @@ getpkgname() {
 
 for repo in ${repos[@]}; do
 	for arch in ${arches[@]}; do
+	echo "$repo/$arch..."
 	#	(
 		repodir=${repo}/os/${arch}
 		cached=false
