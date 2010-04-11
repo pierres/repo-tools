@@ -5,29 +5,49 @@ target="${home}/repo"
 lock='/tmp/mirrorsync.lck'
 tmp="$(mktemp -d)"
 
-[ -f "${lock}" ] && exit 1
+[[ -f "${lock}" ]] && exit 1
 touch "${lock}"
 
-grep_dbinfo() {
-	local _ret
+echo '
+	BEGIN {
+		arg_filename = ARGV[1]
+	}
 
-	_ret="$(grep -m 1 -A 1 "%$2%" "$1" | tail -1)"
-	echo -n "$_ret"
-}
+	arg_filename != FILENAME {
+		arg_filename = FILENAME
+		printf "%s  %s%s\n", md5sum, path, filename
+	}
 
-for repo in {core,extra,community,testing,community-testing}; do
-	for arch in {i686,x86_64}; do
-		echo "Reading $arch/$repo.db.tar.gz..."
-		mkdir -p $tmp/$repo/$arch
-		bsdtar xf $target/$repo/os/$arch/$repo.db.tar.gz -C $tmp/$repo/$arch
-		for p in $tmp/$repo/$arch/*/desc; do
-			echo "$(grep_dbinfo $p MD5SUM)  $target/$repo/os/$arch/$(grep_dbinfo $p FILENAME)" >> $tmp/md5sums.txt
-		done
-	done
-done
+	$0 == "%MD5SUM%" {
+		getline md5sum
+	}
+
+	$0 == "%FILENAME%" {
+		getline filename
+	}
+
+	END {
+		arg_filename = FILENAME
+		printf "%s  %s%s\n", md5sum, path, filename
+	}
+	' > ${tmp}/dbinfo.awk
 
 echo 'Checking repository...'
-md5sum -c --quiet $tmp/md5sums.txt
+for repo in {core,extra,community,testing,community-testing}; do
+	for arch in {i686,x86_64}; do
+		(
+		mkdir -p ${tmp}/${repo}/${arch}
+		bsdtar xf ${target}/${repo}/os/${arch}/${repo}.db.tar.gz -C ${tmp}/${repo}/${arch}
+		find ${tmp}/${repo}/${arch} -name desc -print0 \
+			| xargs -0 awk -f ${tmp}/dbinfo.awk -vpath=${target}/${repo}/os/${arch}/ \
+			>> ${tmp}/md5sums-${arch}.txt
+		)&
+	done
+	wait
+done
 
-rm -rf $tmp
+cat ${tmp}/md5sums-{i686,x86_64}.txt > ${tmp}/md5sums.txt
+md5sum -c --quiet ${tmp}/md5sums.txt
+
+rm -rf ${tmp}
 rm -f "${lock}"
