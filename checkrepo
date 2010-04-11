@@ -1,0 +1,33 @@
+#!/bin/bash
+
+home="$(dirname "${0}")"
+target="${home}/repo"
+lock='/tmp/mirrorsync.lck'
+tmp="$(mktemp -d)"
+
+[ -f "${lock}" ] && exit 1
+touch "${lock}"
+
+grep_dbinfo() {
+	local _ret
+
+	_ret="$(grep -m 1 -A 1 "%$2%" "$1" | tail -1)"
+	echo -n "$_ret"
+}
+
+for repo in {core,extra,community,testing,community-testing}; do
+	for arch in {i686,x86_64}; do
+		echo "Reading $arch/$repo.db.tar.gz..."
+		mkdir -p $tmp/$repo/$arch
+		bsdtar xf $target/$repo/os/$arch/$repo.db.tar.gz -C $tmp/$repo/$arch
+		for p in $tmp/$repo/$arch/*/desc; do
+			echo "$(grep_dbinfo $p MD5SUM)  $target/$repo/os/$arch/$(grep_dbinfo $p FILENAME)" >> $tmp/md5sums.txt
+		done
+	done
+done
+
+echo 'Checking repository...'
+md5sum -c --quiet $tmp/md5sums.txt
+
+rm -rf $tmp
+rm -f "${lock}"
