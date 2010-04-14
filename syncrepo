@@ -9,6 +9,7 @@ repos='core,extra,testing,community,community-testing'
 [ ! -d "${target}" ] && exit 1
 [ -f "${lock}" ] && exit 1
 touch "${lock}"
+trap "rm -f '${lock}'" EXIT INT TERM
 
 rsync -rptlv --safe-links --delete --progress -h \
 	--include='*/' \
@@ -25,5 +26,3 @@ rsync -rptlv --safe-links --delete --progress -h \
 	--exclude='lastsync' \
 	${source}/{${repos}} \
 	"${target}"
-
-rm -f "${lock}"
