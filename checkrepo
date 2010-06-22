@@ -35,15 +35,12 @@ echo '
 echo 'Checking repository...'
 for repo in {core,extra,community,testing,community-testing}; do
 	for arch in {i686,x86_64}; do
-		(
 		mkdir -p ${tmp}/${repo}/${arch}
 		bsdtar xf ${target}/${repo}/os/${arch}/${repo}.db.tar.gz -C ${tmp}/${repo}/${arch}
 		find ${tmp}/${repo}/${arch} -name desc -print0 \
 			| xargs -0 awk -f ${tmp}/dbinfo.awk -vpath=${target}/${repo}/os/${arch}/ \
 			>> ${tmp}/md5sums-${arch}.txt
-		)&
 	done
-	wait
 done
 
 cat ${tmp}/md5sums-{i686,x86_64}.txt > ${tmp}/md5sums.txt
