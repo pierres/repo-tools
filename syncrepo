@@ -1,6 +1,6 @@
 #!/bin/bash
 
-home="$(dirname "${0}")"
+home="$(dirname "$(readlink -f $0)")"
 target="${home}/repo"
 tmp="${home}/tmp"
 lock='/tmp/mirrorsync.lck'
@@ -14,9 +14,8 @@ touch "${lock}"
 trap "rm -f '${lock}'" EXIT INT TERM
 
 rsync -rtlvH --safe-links --delete-after --progress -h \
-	--partial \
-	--partial-dir="${tmp}" \
 	--delay-updates \
+	--temp-dir="${tmp}" \
 	--exclude='*.abs.tar.gz*' \
 	--exclude='*.files.tar.gz*' \
 	--exclude='*.links.tar.gz*' \
