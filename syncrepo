@@ -2,24 +2,21 @@
 
 home="$(dirname "${0}")"
 target="${home}/repo"
+tmp="${home}/tmp"
 lock='/tmp/mirrorsync.lck'
 source='-e ssh gerolde.archlinux.org:/srv/ftp'
 repos='core,extra,testing,community,community-testing'
 
-[ ! -d "${target}" ] && exit 1
+[ ! -d "${target}" ] && mkdir -p "${target}"
+[ ! -d "${tmp}" ] && mkdir -p "${tmp}"
 [ -f "${lock}" ] && exit 1
 touch "${lock}"
 trap "rm -f '${lock}'" EXIT INT TERM
 
-rsync -rptlv --safe-links --delete --progress -h \
-	--include='*/' \
-	--include='*.db.tar.gz' \
-	--exclude='*' \
-	${source}/{${repos}} \
-	"${target}"
-
-rsync -rptlv --safe-links --delete --progress -h \
-	--exclude='*.db.tar.gz*' \
+rsync -rtlvH --safe-links --delete-after --progress -h \
+	--partial \
+	--partial-dir="${tmp}" \
+	--delay-updates \
 	--exclude='*.abs.tar.gz*' \
 	--exclude='*.files.tar.gz*' \
 	--exclude='*.links.tar.gz*' \
