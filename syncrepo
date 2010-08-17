@@ -5,7 +5,7 @@ target="${home}/repo"
 tmp="${home}/tmp"
 lock='/tmp/mirrorsync.lck'
 source='-e ssh gerolde.archlinux.org:/srv/ftp'
-repos='core,extra,testing,community,community-testing'
+repos='core,extra,testing,community,community-testing,staging,pool'
 
 [ ! -d "${target}" ] && mkdir -p "${target}"
 [ ! -d "${tmp}" ] && mkdir -p "${tmp}"
@@ -16,6 +16,7 @@ trap "rm -f '${lock}'" EXIT INT TERM
 rsync -rtlvH --safe-links --delete-after --progress -h \
 	--delay-updates \
 	--temp-dir="${tmp}" \
+	--exclude='*.db.tar.gz*' \
 	--exclude='*.abs.tar.gz*' \
 	--exclude='*.files.tar.gz*' \
 	--exclude='*.links.tar.gz*' \

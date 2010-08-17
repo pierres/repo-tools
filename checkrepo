@@ -33,13 +33,15 @@ echo '
 	' > ${tmp}/dbinfo.awk
 
 echo 'Checking repository...'
-for repo in {core,extra,community,testing,community-testing}; do
+for repo in {core,extra,community,testing,community-testing,staging}; do
 	for arch in {i686,x86_64}; do
 		mkdir -p ${tmp}/${repo}/${arch}
-		bsdtar xf ${target}/${repo}/os/${arch}/${repo}.db.tar.gz -C ${tmp}/${repo}/${arch}
-		find ${tmp}/${repo}/${arch} -name desc -print0 \
-			| xargs -0 awk -f ${tmp}/dbinfo.awk -vpath=${target}/${repo}/os/${arch}/ \
-			>> ${tmp}/md5sums-${arch}.txt
+		if [ -r ${target}/${repo}/os/${arch}/${repo}.db ]; then
+			bsdtar xf ${target}/${repo}/os/${arch}/${repo}.db -C ${tmp}/${repo}/${arch}
+			find ${tmp}/${repo}/${arch} -name desc -print0 \
+				| xargs -0 awk -f ${tmp}/dbinfo.awk -vpath=${target}/${repo}/os/${arch}/ \
+				>> ${tmp}/md5sums-${arch}.txt
+		fi
 	done
 done
 
