@@ -16,7 +16,7 @@ trap "rm -f '${lock}'" EXIT INT TERM
 rsync -rtlvH --safe-links --delete-after --progress -h \
 	--delay-updates \
 	--temp-dir="${tmp}" \
-	--exclude='*.db.tar.gz*' \
+	--exclude='*.db.tar.gz.old' \
 	--exclude='*.abs.tar.gz*' \
 	--exclude='*.files.tar.gz*' \
 	--exclude='*.links.tar.gz*' \
