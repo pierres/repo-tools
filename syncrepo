@@ -4,8 +4,7 @@ home="$(dirname "$(readlink -f $0)")"
 target="${home}/repo"
 tmp="${home}/tmp"
 lock='/tmp/mirrorsync.lck'
-source='-e ssh gerolde.archlinux.org:/srv/ftp'
-repos='core,extra,testing,community,community-testing,staging,pool'
+source='mirrors.kernel.org::archlinux'
 
 [ ! -d "${target}" ] && mkdir -p "${target}"
 [ ! -d "${tmp}" ] && mkdir -p "${tmp}"
@@ -14,12 +13,13 @@ touch "${lock}"
 trap "rm -f '${lock}'" EXIT INT TERM
 
 rsync -rtlvH --safe-links --delete-after --progress -h \
-	--delay-updates \
+	--delay-updates --no-motd \
 	--temp-dir="${tmp}" \
-	--exclude='*.db.tar.gz.old' \
-	--exclude='*.abs.tar.gz*' \
-	--exclude='*.files.tar.gz*' \
 	--exclude='*.links.tar.gz*' \
-	--exclude='lastsync' \
-	${source}/{${repos}} \
+	--exclude='/other' \
+	--exclude='/sources' \
+	--exclude='/iso' \
+	${source} \
 	"${target}"
+
+echo "Last sync was $(date -d @$(cat repo/lastsync))"
