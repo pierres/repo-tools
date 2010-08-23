@@ -13,7 +13,7 @@ touch "${lock}"
 trap "rm -f '${lock}'" EXIT INT TERM
 
 rsync -rtlvH --safe-links --delete-after --progress -h \
-	--delay-updates --no-motd \
+	--delay-updates --no-motd --bwlimit=1000 \
 	--temp-dir="${tmp}" \
 	--exclude='*.links.tar.gz*' \
 	--exclude='/other' \
@@ -22,4 +22,4 @@ rsync -rtlvH --safe-links --delete-after --progress -h \
 	${source} \
 	"${target}"
 
-echo "Last sync was $(date -d @$(cat repo/lastsync))"
+echo "Last sync was $(date -d @$(cat ${target}/lastsync))"
