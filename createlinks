@@ -2,7 +2,7 @@
 
 home="$(dirname "${0}")"
 target="${home}/repo"
-repos=('core' 'extra' 'community')
+repos=('core' 'extra' 'community' 'testing' 'community-testing' 'staging' 'multilib')
 arches=('i686' 'x86_64')
 lock='/tmp/mirrorsync.lck'
 tmp="$(mktemp -d)"
@@ -35,7 +35,7 @@ for repo in ${repos[@]}; do
 		fi
 
 		# create file lists
-		for pkg in $(find $target/$repodir -type f -name '*.pkg.tar.*'); do
+		for pkg in $(find $target/$repodir -xtype f -name '*.pkg.tar.*'); do
 			pkgname=$(getpkgname $pkg)
 			tmppkgdir=${tmp}/tmp/${repodir}/${pkgname}
 			mkdir -p $tmppkgdir
@@ -66,5 +66,5 @@ for repo in ${repos[@]}; do
 #wait
 done
 
-rm -rf ${tmp} 
+rm -rf ${tmp}
 rm -f "${lock}"
