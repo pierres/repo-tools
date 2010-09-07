@@ -21,9 +21,6 @@ for arch in ${arches[@]}; do
 	if [ -f ${db} ]; then
 		mkdir -p ${tmp}/${repo}/${arch}
 		bsdtar -xf ${db} -C ${tmp}/${repo}/${arch}
-	else
-		echo "${db} not found!"
-		exit 1
 	fi
 done
 

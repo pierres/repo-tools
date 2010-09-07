@@ -4,7 +4,7 @@ home="$(dirname "$(readlink -f $0)")"
 target="${home}/repo"
 tmp="${home}/tmp"
 lock='/tmp/mirrorsync.lck'
-source='mirrors.kernel.org::archlinux'
+source='ftp5.gwdg.de::pub/linux/archlinux/'
 
 [ ! -d "${target}" ] && mkdir -p "${target}"
 [ ! -d "${tmp}" ] && mkdir -p "${tmp}"

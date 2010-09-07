@@ -22,9 +22,9 @@ getpkgname() {
 
 for repo in ${repos[@]}; do
 	for arch in ${arches[@]}; do
-	echo "$repo/$arch..."
-	#	(
 		repodir=${repo}/os/${arch}
+		[ ! -f ${target}/$repodir/$repo.db ] && continue
+		echo "$repo/$arch..."
 		cached=false
 
 		# extract old file archive
@@ -61,9 +61,7 @@ for repo in ${repos[@]}; do
 			mkdir -p $pkgdir
 			bsdtar --exclude=*.tar.* -czf ${pkgdir}/${repo}.links.tar.gz -C ${tmp}/tmp/${repodir} .
 		fi
-	#	)&
 	done
-#wait
 done
 
 rm -rf ${tmp}
