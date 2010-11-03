@@ -45,7 +45,7 @@ for repo in ${repos[@]}; do
 			else
 				echo "$repo/$arch: $pkgname"
 				mkdir -p ${tmppkgdir}/pkg
-				bsdtar -xof $pkg -C ${tmppkgdir}/pkg --include={opt,{,usr/}{lib,{s,}bin}}'/*' 2>/dev/null
+				bsdtar -xof $pkg -C ${tmppkgdir}/pkg --include={opt,{,usr/}{lib{,32},{s,}bin}}'/*' 2>/dev/null
 				for f in $(find ${tmppkgdir}/pkg -type f); do
 					readelf -d "$f" 2> /dev/null | sed -nr 's/.*Shared library: \[(.*)\].*/\1/p'
 				done | sort -u > ${tmppkgdir}/links
