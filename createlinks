@@ -9,6 +9,7 @@ tmp="$(mktemp -d)"
 
 [ -f "${lock}" ] && exit 1
 touch "${lock}"
+trap "rm -rf '${lock}' '${tmp}'" EXIT INT TERM
 
 renice +10 -p $$ > /dev/null
 
@@ -63,6 +64,3 @@ for repo in ${repos[@]}; do
 		fi
 	done
 done
-
-rm -rf ${tmp}
-rm -f "${lock}"

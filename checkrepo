@@ -7,6 +7,7 @@ tmp="$(mktemp -d)"
 
 [[ -f "${lock}" ]] && exit 1
 touch "${lock}"
+trap "rm -rf '${lock}' '${tmp}'" EXIT INT TERM
 
 echo '
 	BEGIN {
@@ -49,6 +50,3 @@ done
 
 cat ${tmp}/md5sums-{i686,x86_64}.txt > ${tmp}/md5sums.txt
 md5sum -c --quiet ${tmp}/md5sums.txt
-
-rm -rf ${tmp}
-rm -f "${lock}"
