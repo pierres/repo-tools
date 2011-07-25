@@ -1,0 +1,32 @@
+#!/bin/bash
+
+home="$(dirname "${0}")"
+target="${home}/repo"
+lock='/tmp/mirrorsync.lck'
+tmp="$(mktemp -d)"
+
+[ -f "${lock}" ] && exit 1
+touch "${lock}"
+
+trap "rm -rf '${lock}' '${tmp}'" EXIT INT TERM
+
+find "${target}" -xtype f -name '*.db' | sort > "${tmp}/dbs"
+find "${target}" -xtype f -name '*.files' | sed 's/.files/.db/g' | sort > "${tmp}/files"
+
+if ! diff -q "${tmp}/dbs" "${tmp}/files" >/dev/null; then
+	echo "there are db or files missing"
+	diff -u "${tmp}/dbs" "${tmp}/files"
+	exit 1
+fi
+
+for db in $(cat "${tmp}/dbs"); do
+	mkdir "${tmp}/dbdir" "${tmp}/filesdir"
+	bsdtar xf "${db}" -C "${tmp}/dbdir"
+	bsdtar xf "${db/.db/.files}" --exclude '*/files' -C "${tmp}/filesdir"
+	if ! diff -Nrq "${tmp}/dbdir" "${tmp}/filesdir" >/dev/null; then
+		dbname="${db/${target}\//}"
+		diff -Nura --label "${dbname}" "${tmp}/dbdir" --label "${dbname/.db/.files}" "${tmp}/filesdir"
+		echo -e "\n\n"
+	fi
+	rm -rf "${tmp}/dbdir" "${tmp}/filesdir"
+done
