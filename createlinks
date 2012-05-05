@@ -11,7 +11,7 @@ extractinc=(--include={opt,{,usr/}{lib{,32},{s,}bin}}'/*')
 
 [ -f "${lock}" ] && exit 1
 touch "${lock}"
-trap "rm -rf '${lock}' '${tmp}'" EXIT INT TERM
+trap "rm -rf '${lock}' '${tmp}'" EXIT
 
 renice +10 -p $$ > /dev/null
 
