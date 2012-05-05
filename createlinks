@@ -16,6 +16,26 @@ getpkgname() {
 	echo ${tmp%-*.pkg.tar.*}
 }
 
+create_file_list() {
+	local pkgname=$(getpkgname "$1")
+
+	tmppkgdir=$tmp/tmp/$repodir/$pkgname
+	mkdir -p "$tmppkgdir"
+	if [[ -f $tmp/cache/$repodir/$pkgname/links ]]; then
+		# reuse the cached file
+		mv "$tmp/cache/$repodir/$pkgname/links" "$tmppkgdir/links"
+		return 0
+	else
+		echo "$repo/$arch: $pkgname"
+		mkdir -p "$tmppkgdir/pkg"
+		bsdtar -xof "$pkg" -C "$tmppkgdir/pkg" "${extractinc[@]}" 2>/dev/null
+		find "$tmppkgdir/pkg" -type f -exec readelf -d {} + 2>/dev/null |
+				sed -nr 's/.*Shared library: \[(.*)\]$/\1/p' | sort -u >"$tmppkgdir/links"
+		rm -rf "$tmppkgdir/pkg"
+		return 1
+	fi
+}
+
 generate_links() {
 	for repo in ${repos[@]}; do
 		for arch in ${arches[@]}; do
@@ -35,19 +55,8 @@ generate_links() {
 			for pkg in "$target/$repodir"/*.pkg.tar.?z; do
 				[[ -f $pkg ]] || continue
 
-				pkgname=$(getpkgname $pkg)
-				tmppkgdir=${tmp}/tmp/${repodir}/${pkgname}
-				mkdir -p $tmppkgdir
-				if [ -f "${tmp}/cache/${repodir}/${pkgname}/links" ]; then
-					# reuse the cached file
-					mv ${tmp}/cache/${repodir}/${pkgname}/links ${tmppkgdir}/links
-				else
-					echo "$repo/$arch: $pkgname"
-					mkdir -p ${tmppkgdir}/pkg
-					bsdtar -xvof "$pkg" -C "$tmppkgdir/pkg" "${extractinc[@]}" 2>/dev/null
-					find "$tmppkgdir/pkg" -type f -exec readelf -d {} + 2>/dev/null |
-							sed -nr 's/.*Shared library: \[(.*)\]$/\1/p' | sort -u >"$tmppkgdir/links"
-					rm -rf ${tmppkgdir}/pkg
+				create_file_list "$pkg"
+				if (( $? != 0 )); then
 					cached=false
 				fi
 			done
