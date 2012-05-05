@@ -9,12 +9,6 @@ tmp="$(mktemp -d)"
 
 extractinc=(--include={opt,{,usr/}{lib{,32},{s,}bin}}'/*')
 
-[ -f "${lock}" ] && exit 1
-touch "${lock}"
-trap "rm -rf '${lock}' '${tmp}'" EXIT
-
-renice +10 -p $$ > /dev/null
-
 getpkgname() {
 	local tmp
 
@@ -22,48 +16,57 @@ getpkgname() {
 	echo ${tmp%-*.pkg.tar.*}
 }
 
+generate_links() {
+	for repo in ${repos[@]}; do
+		for arch in ${arches[@]}; do
+			repodir=${repo}/os/${arch}
+			[ ! -f ${target}/$repodir/$repo.db ] && continue
+			echo "$repo/$arch..."
+			cached=false
 
-for repo in ${repos[@]}; do
-	for arch in ${arches[@]}; do
-		repodir=${repo}/os/${arch}
-		[ ! -f ${target}/$repodir/$repo.db ] && continue
-		echo "$repo/$arch..."
-		cached=false
+			# extract old file archive
+			if [ -f ${target}/${repodir}/${repo}.links.tar.gz ]; then
+				mkdir -p ${tmp}/cache/${repodir}
+				bsdtar -xf ${target}/${repodir}/${repo}.links.tar.gz -C ${tmp}/cache/${repodir}
+				cached=true
+			fi
 
-		# extract old file archive
-		if [ -f ${target}/${repodir}/${repo}.links.tar.gz ]; then
-			mkdir -p ${tmp}/cache/${repodir}
-			bsdtar -xf ${target}/${repodir}/${repo}.links.tar.gz -C ${tmp}/cache/${repodir}
-			cached=true
-		fi
+			# create file lists
+			for pkg in "$target/$repodir"/*.pkg.tar.?z; do
+				[[ -f $pkg ]] || continue
 
-		# create file lists
-		for pkg in "$target/$repodir"/*.pkg.tar.?z; do
-			[[ -f $pkg ]] || continue
+				pkgname=$(getpkgname $pkg)
+				tmppkgdir=${tmp}/tmp/${repodir}/${pkgname}
+				mkdir -p $tmppkgdir
+				if [ -f "${tmp}/cache/${repodir}/${pkgname}/links" ]; then
+					# reuse the cached file
+					mv ${tmp}/cache/${repodir}/${pkgname}/links ${tmppkgdir}/links
+				else
+					echo "$repo/$arch: $pkgname"
+					mkdir -p ${tmppkgdir}/pkg
+					bsdtar -xvof "$pkg" -C "$tmppkgdir/pkg" "${extractinc[@]}" 2>/dev/null
+					find "$tmppkgdir/pkg" -type f -exec readelf -d {} + 2>/dev/null |
+							sed -nr 's/.*Shared library: \[(.*)\]$/\1/p' | sort -u >"$tmppkgdir/links"
+					rm -rf ${tmppkgdir}/pkg
+					cached=false
+				fi
+			done
 
-			pkgname=$(getpkgname $pkg)
-			tmppkgdir=${tmp}/tmp/${repodir}/${pkgname}
-			mkdir -p $tmppkgdir
- 			if [ -f "${tmp}/cache/${repodir}/${pkgname}/links" ]; then
-				# reuse the cached file
-				mv ${tmp}/cache/${repodir}/${pkgname}/links ${tmppkgdir}/links
-			else
-				echo "$repo/$arch: $pkgname"
-				mkdir -p ${tmppkgdir}/pkg
-				bsdtar -xof "$pkg" -C "$tmppkgdir/pkg" "${extractinc[@]}" 2>/dev/null
-				find "$tmppkgdir/pkg" -type f -exec readelf -d {} + 2>/dev/null |
-						sed -nr 's/.*Shared library: \[(.*)\]$/\1/p' | sort -u >"$tmppkgdir/links"
-				rm -rf ${tmppkgdir}/pkg
-				cached=false
- 			fi
+			# create new file archive
+			if ! $cached; then
+				# at least one package has changed, so let's rebuild the archive
+				pkgdir=${target}/${repodir}
+				mkdir -p $pkgdir
+				bsdtar --exclude=*.tar.* -czf ${pkgdir}/${repo}.links.tar.gz -C ${tmp}/tmp/${repodir} .
+			fi
 		done
-
-		# create new file archive
-		if ! $cached; then
-			# at least one package has changed, so let's rebuild the archive
-			pkgdir=${target}/${repodir}
-			mkdir -p $pkgdir
-			bsdtar --exclude=*.tar.* -czf ${pkgdir}/${repo}.links.tar.gz -C ${tmp}/tmp/${repodir} .
-		fi
 	done
-done
+}
+
+trap "rm -rf '${tmp}'" EXIT
+renice +10 -p $$ > /dev/null
+
+{
+	flock -n 9 || exit 42
+	generate_links
+} 9>"$lock"
