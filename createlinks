@@ -7,6 +7,8 @@ arches=('i686' 'x86_64')
 lock='/tmp/mirrorsync.lck'
 tmp="$(mktemp -d)"
 
+extractinc=(--include={opt,{,usr/}{lib{,32},{s,}bin}}'/*')
+
 [ -f "${lock}" ] && exit 1
 touch "${lock}"
 trap "rm -rf '${lock}' '${tmp}'" EXIT INT TERM
@@ -48,10 +50,9 @@ for repo in ${repos[@]}; do
 			else
 				echo "$repo/$arch: $pkgname"
 				mkdir -p ${tmppkgdir}/pkg
-				bsdtar -xof $pkg -C ${tmppkgdir}/pkg --include={opt,{,usr/}{lib{,32},{s,}bin}}'/*' 2>/dev/null
-				for f in $(find ${tmppkgdir}/pkg -type f); do
-					readelf -d "$f" 2> /dev/null | sed -nr 's/.*Shared library: \[(.*)\].*/\1/p'
-				done | sort -u > ${tmppkgdir}/links
+				bsdtar -xof "$pkg" -C "$tmppkgdir/pkg" "${extractinc[@]}" 2>/dev/null
+				find "$tmppkgdir/pkg" -type f -exec readelf -d {} + 2>/dev/null |
+						sed -nr 's/.*Shared library: \[(.*)\]$/\1/p' | sort -u >"$tmppkgdir/links"
 				rm -rf ${tmppkgdir}/pkg
 				cached=false
  			fi
