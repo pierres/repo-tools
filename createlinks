@@ -76,7 +76,7 @@ generate_links() {
 	done
 }
 
-trap "rm -rf '${tmp}'" EXIT
+trap "rm -rf '${tmp}' '${lock}'" EXIT
 renice +10 -p $$ > /dev/null
 
 {
