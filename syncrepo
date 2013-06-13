@@ -4,7 +4,7 @@ home="$(dirname "$(readlink -f $0)")"
 target="${home}/repo"
 tmp="${home}/tmp"
 lock='/tmp/mirrorsync.lck'
-source='pkgbuild.com::packages/'
+source='brynhild.archlinux.org::packages/'
 
 [ ! -d "${target}" ] && mkdir -p "${target}"
 [ ! -d "${tmp}" ] && mkdir -p "${tmp}"
@@ -12,8 +12,8 @@ source='pkgbuild.com::packages/'
 touch "${lock}"
 trap "rm -f '${lock}'" EXIT INT TERM
 
-rsync -rtlvH --safe-links --delete-after --progress -h \
-	--delay-updates --no-motd --bwlimit=1000 \
+rsync -rtlvHy --safe-links --delete-after --progress -h \
+	--delay-updates --no-motd --bwlimit=4096 \
 	--temp-dir="${tmp}" \
 	--exclude='*.links.tar.gz' \
 	--exclude='*.old' \
