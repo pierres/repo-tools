@@ -4,7 +4,7 @@ home="$(dirname "$(readlink -f $0)")"
 target="${home}/repo"
 tmp="${home}/tmp"
 lock='/tmp/mirrorsync.lck'
-source='brynhild.archlinux.org::packages/'
+source='rsync://mirror.de.leaseweb.net/archlinux/'
 
 [ ! -d "${target}" ] && mkdir -p "${target}"
 [ ! -d "${tmp}" ] && mkdir -p "${tmp}"
@@ -12,7 +12,7 @@ source='brynhild.archlinux.org::packages/'
 touch "${lock}"
 trap "rm -f '${lock}'" EXIT INT TERM
 
-rsync -rtlvHy --safe-links --delete-after --progress -h \
+rsync -rtlvHy --safe-links --delete-after -h \
 	--delay-updates --no-motd --bwlimit=4096 \
 	--temp-dir="${tmp}" \
 	--exclude='*.links.tar.gz' \
@@ -20,7 +20,10 @@ rsync -rtlvHy --safe-links --delete-after --progress -h \
 	--exclude='/other' \
 	--exclude='/sources' \
 	--exclude='/iso' \
+	--exclude='/project' \
+	--exclude='/Archive-Update-*-mirror.de.leaseweb.net' \
 	${source} \
 	"${target}"
 
-echo "Last sync was $(date -d @$(cat ${target}/lastsync))"
+echo "Last sync was   $(date -d @$(cat ${target}/lastsync))"
+echo "Last update was $(date -d @$(cat ${target}/lastupdate))"
