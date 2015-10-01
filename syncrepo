@@ -4,7 +4,7 @@ home="$(dirname "$(readlink -f $0)")"
 target="${home}/repo"
 tmp="${home}/tmp"
 lock='/tmp/mirrorsync.lck'
-source='rsync://mirror.de.leaseweb.net/archlinux/'
+source='rsync://mirror.leaseweb.net/archlinux/'
 
 [ ! -d "${target}" ] && mkdir -p "${target}"
 [ ! -d "${tmp}" ] && mkdir -p "${tmp}"
@@ -21,7 +21,7 @@ rsync -rtlvHy --safe-links --delete-after -h \
 	--exclude='/sources' \
 	--exclude='/iso' \
 	--exclude='/project' \
-	--exclude='/Archive-Update-*-mirror.de.leaseweb.net' \
+	--exclude='/Archive-Update-*-mirror*leaseweb.net' \
 	${source} \
 	"${target}"
 
