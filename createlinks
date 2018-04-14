@@ -2,8 +2,8 @@
 
 home="$(dirname "${0}")"
 target="${home}/repo"
-repos=('core' 'extra' 'community' 'testing' 'community-testing' 'staging' 'multilib')
-arches=('i686' 'x86_64')
+repos=('community' 'community-staging' 'community-testing' 'core' 'extra' 'gnome-unstable' 'kde-unstable' 'multilib' 'multilib-staging' 'multilib-testing' 'staging' 'testing')
+arches=('x86_64')
 lock='/tmp/mirrorsync.lck'
 tmp="$(mktemp -d)"
 

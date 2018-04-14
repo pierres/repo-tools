@@ -4,7 +4,7 @@ home="$(dirname "$(readlink -f $0)")"
 target="${home}/repo"
 tmp="${home}/tmp"
 lock='/tmp/mirrorsync.lck'
-source='rsync://mirror.leaseweb.net/archlinux/'
+source='rsync://mirror.pkgbuild.com/packages/'
 
 [ ! -d "${target}" ] && mkdir -p "${target}"
 [ ! -d "${tmp}" ] && mkdir -p "${tmp}"
